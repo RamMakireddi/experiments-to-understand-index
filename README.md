@@ -1,40 +1,42 @@
-What Does It Mean for a Column to Be Indexed??
+# What Does It Mean for a Column to Be Indexed?
 
-GOAL: to understand behavior of scan types with and without a column is Indexed
+## Goal
+The goal of this project is to understand behavior of scan types with and without a column is Indexed.
 
-SCAN TYPES
+## Scan Types
 All database operations are one of Create Read Update Delete(CRUD) operations. These operations require the database engine to read/write data from the disk, accessing one or many blocks/pages of the data from the disk requires scanning of the data to get the exact block(s). A scan is the operation we aim to optimize with an index. We will see 4 main types of scan
 
-Seq Scan: The database engine scans through all the data sequentially
+### Seq Scan
+The database engine scans through all the data sequentially
 
-Parllel Seq Scan: The database scans through all the data in parallel with n number of workers (can be gotten using explain). This is not used always because the overhead of starting, managing and reading data from multiple workers is a lot, but used to improve the performance of queries that require scanning a large amount of data but only few of them satisfy the selection criteria.
+### Parllel Seq Scan
+The database scans through all the data in parallel with n number of workers (can be gotten using explain). This is not used always because the overhead of starting, managing and reading data from multiple workers is a lot, but used to improve the performance of queries that require scanning a large amount of data but only few of them satisfy the selection criteria.
 
-Index Scan: If your query has a filter on an indexed column, the database engine uses the B-tree index to get the data location and just reads that page (this is the fastest). Depending on the database, if the database engine determines your query will return > 5-10% of the entire data Index Scan will be skipped for a Seq Scan, this is because the database engine decides that overhead of getting the page location from B-tree index, then reading the page for multiple values of the indexed column is not worth it compared to a simple sequential scan of the entire data.
+### Index Scan
+If your query has a filter on an indexed column, the database engine uses the B-tree index to get the data location and just reads that page (this is the fastest). Depending on the database, if the database engine determines your query will return > 5-10% of the entire data Index Scan will be skipped for a Seq Scan, this is because the database engine decides that overhead of getting the page location from B-tree index, then reading the page for multiple values of the indexed column is not worth it compared to a simple sequential scan of the entire data.
 
-Bitmap Index Scan: This is a combination of Index Scan and Seq Scan, this scan is used when the number of rows to be selected are too large for Index Scan and too low for Seq Scan.
+### Bitmap Index Scan
+This is a combination of Index Scan and Seq Scan, this scan is used when the number of rows to be selected are too large for Index Scan and too low for Seq Scan.
 
-
-EXPERIMENTS
-
-SETUP
+## Setup
 What We Need?
-1. docker to run postgres
-2. pgcli to connect to postgres instance
-3. user.csv file
+  1. docker to run postgres
+  2. pgcli to connect to postgres instance
+  3. user.csv file
 
-#1. Setup Docker with folder (with user.csv) as a volume and start postgres container
+Setup Docker with folder (with user.csv) as a volume and start postgres container
 
     docker run -d --name postgres -p 5432:5432 -e POSTGRES_USER=data_engineer \
     -e POSTGRES_PASSWORD=data_password -e POSTGRES_DB=indextest \
     -v <your-data-folder>:/data postgres
 
-#2. Start pgcli and connect to postgres instance
+Start pgcli and connect to postgres instance
 
     pgcli -h localhost -p 5432 -U data_engineer indextest
 
     Note: type password when it prompts
 
-#3. Create user table
+Create user table
 
     CREATE SCHEMA bank;
     SET search_path TO bank,public;
@@ -45,16 +47,16 @@ What We Need?
         user_account_type char(1)
       );
 
-#4. load given user.csv file into user table
+Load given user.csv file into user table
 
     COPY bank.user FROM '/data/user.csv' DELIMITER ',' CSV HEADER;
 
-EXPLAIN
+## Explain
 Explain command is used to explain how the database engine executes the given query
 
 
-EXPERIMENTS
-#1. Select query with filter on score without index
+## Experiments
+E1. Select query with filter on score without index
 
     explain select * from bank.user where score = 900001;
 
@@ -62,7 +64,7 @@ EXPERIMENTS
     Execution time: 0.055s
 
 
-#2. Select query with range filter on score without index
+E2. Select query with range filter on score without index
 
     explain select * from bank.user where score > 900000;
 
@@ -70,7 +72,7 @@ EXPERIMENTS
     Execution time: 0.354s
 
 
-#3. Update query with filter on score without index
+E3. Update query with filter on score without index
 
     explain update bank.user set score = 1000000 where score > 1000;
 
@@ -78,7 +80,7 @@ EXPERIMENTS
     Execution time: 2.447s
 
 
-#4. Select query with filter on user_account_type without indexed
+E4. Select query with filter on user_account_type without indexed
 
     explain select * from bank.user where user_account_type='S';
 
@@ -86,7 +88,7 @@ EXPERIMENTS
     Execution time: 0.830s
 
 
-#5. Select query with filter on score with index
+E5. Select query with filter on score with index
 
     CREATE INDEX score_idx ON bank.user (score);
 
@@ -96,7 +98,7 @@ EXPERIMENTS
     Execution time: 0.019s
 
 
-#6. Select query with range filter on score with index
+E6. Select query with range filter on score with index
 
     explain select * from bank.user where score > 900000;
 
@@ -111,7 +113,7 @@ EXPERIMENTS
     Execution time: 0.585s
 
 
-#7. Update query on score with filter on score with index
+E7. Update query on score with filter on score with index
 
     explain update bank.user set score = 100000 where score > 1000;
 
@@ -120,7 +122,7 @@ EXPERIMENTS
     Execution time: 4.239s
 
 
-#8. Select query with filter on user_account_type with index
+E8. Select query with filter on user_account_type with index
 
     CRATE INDEX user_actype_idx ON bank.user(user_account_type);
 
@@ -131,19 +133,19 @@ EXPERIMENTS
     Execution time: 0.660s
 
 
-CARDINALITY
+## Cardinality
 
-Cardinality defines the uniqueness of the data field
-    High Cardinality: field that has many unique values e.g. score
-    Low Cardinality: field that has few unique values e.g. user_account_type
+Cardinality defines the uniqueness of the data field.
+  1. ***High Cardinality*** field that has many unique values e.g. score
+  2. ***Low Cardinality*** field that has few unique values e.g. user_account_type
 
 
-SUMMARY ON USING AN INDEX
+## Summary on using an Index
 
-Pros
+**Pros**
   1. Query with filter on an indexed column is much faster than one without. See Exp#1 vs Exp#5
 
-Cons
+**Cons**
   1. Performance drops for insert/update/delete operations, since the B-tree also has to be managed
      Compare Exp#7 and Exp#3, udpate time 8.627s with index vs 2.447s without index
   2. Depending on flavor of SQL, create/update/delete operations can be locked while the column is being indexed
