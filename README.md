@@ -56,7 +56,7 @@ Explain command is used to explain how the database engine executes the given qu
 
 
 ## Experiments
-###### E1. Select query with filter on score without index
+##### E1. Select query with filter on score without index
 
     explain select * from bank.user where score = 900001;
 
@@ -65,7 +65,7 @@ Scan type: *Parallel Seq Scan* is used since no index and with very few rows for
 Execution time: 0.055s
 
 
-###### E2. Select query with range filter on score without index
+##### E2. Select query with range filter on score without index
 
     explain select * from bank.user where score > 900000;
 
@@ -73,7 +73,7 @@ Scan type: *Seq Scan* is used since no index and need to query entire dataset.
 
 Execution time: 0.354s
 
-###### E3. Update query with filter on score without index
+##### E3. Update query with filter on score without index
 
     explain update bank.user set score = 1000000 where score > 1000;
 
@@ -82,7 +82,7 @@ Scan type: *Seq Scan* is used since no index and range filter on score to scan e
 Execution time: 2.447s
 
 
-###### E4. Select query with filter on user_account_type without indexed
+##### E4. Select query with filter on user_account_type without indexed
 
     explain select * from bank.user where user_account_type='S';
 
@@ -91,7 +91,7 @@ Scan type: *Seq Scan* is used to scan entire dataset since no index.
 Execution time: 0.830s
 
 
-###### E5. Select query with filter on score with index
+##### E5. Select query with filter on score with index
 
     CREATE INDEX score_idx ON bank.user (score);
 
@@ -103,7 +103,7 @@ the required data lives in.
 Execution time: 0.019s
 
 
-###### E6. Select query with range filter on score with index
+##### E6. Select query with range filter on score with index
 
     explain select * from bank.user where score > 900000;
 
@@ -121,7 +121,7 @@ score > 600000 is more than a simple Seq Scan.
 Execution time: 0.585s
 
 
-###### E7. Update query on score with filter on score with index
+##### E7. Update query on score with filter on score with index
 
     explain update bank.user set score = 100000 where score > 1000;
 
@@ -131,7 +131,7 @@ to be too large to benefit from Index scan and is too small to warrant a full Se
 Execution time: 4.239s
 
 
-###### E8. Select query with filter on user_account_type with index
+##### E8. Select query with filter on user_account_type with index
 
     CRATE INDEX user_actype_idx ON bank.user(user_account_type);
 
