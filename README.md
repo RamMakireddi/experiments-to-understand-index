@@ -143,11 +143,11 @@ Cardinality defines the uniqueness of the data field.
 ## Summary on using an Index
 
 **Pros**
-  1. Query with filter on an indexed column is much faster than one without. See Exp#1 vs Exp#5
+  1. Query with filter on an indexed column is much faster than one without. See E1 vs E5
 
 **Cons**
   1. Performance drops for insert/update/delete operations, since the B-tree also has to be managed
-     Compare Exp#7 and Exp#3, udpate time 8.627s with index vs 2.447s without index
+     Compare E7 and E3, udpate time 8.627s with index vs 2.447s without index
   2. Depending on flavor of SQL, create/update/delete operations can be locked while the column is being indexed
   3. An index may not be used always, depending on estimated result size
   4. The increase of performance of index for low cardinality column will be lower than that of a high cardinality one.
